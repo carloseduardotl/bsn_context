@@ -28,6 +28,6 @@
             0 -> Simulation (default)
             1 -> Real sensors with Arduino
             2 -> Table data (Turn on this feature to auto generate the file at data_to_read/*sensor_name*.csv)-->
-    <param name="connect_sensor_/g3t1_2" value="2" type="int" />
+    <param name="connect_sensor_/g3t1_2" value="0" type="int" />
 
 </launch>
