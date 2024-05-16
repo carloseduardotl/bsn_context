@@ -1,4 +1,26 @@
 <launch>
     <node name="context_adaptation" pkg="component" type="context_adaptation" output="screen" />
     <param name="context_frequency" value="1" /> 
+
+
+    <!-- Risk values for heart frequency -->
+    <param name="context0_heart_rate_HighRisk0" value="0,70" />
+    <param name="context0_heart_rate_MidRisk0" value="70,85" />
+    <param name="context0_heart_rate_LowRisk" value="85,97" />
+    <param name="context0_heart_rate_MidRisk1" value="97,115" />
+    <param name="context0_heart_rate_HighRisk1" value="115,300" />
+
+    <!-- Risk values for heart frequency -->
+    <param name="context1_heart_rate_HighRisk0" value="0,40" />
+    <param name="context1_heart_rate_MidRisk0" value="40,50" />
+    <param name="context1_heart_rate_LowRisk" value="50,70" />
+    <param name="context1_heart_rate_MidRisk1" value="70,80" />
+    <param name="context1_heart_rate_HighRisk1" value="80,100" />
+
+    <!-- Risk values for heart frequency -->
+    <param name="context2_heart_rate_HighRisk0" value="0,80" />
+    <param name="context2_heart_rate_MidRisk0" value="80,100" />
+    <param name="context2_heart_rate_LowRisk" value="100,140" />
+    <param name="context2_heart_rate_MidRisk1" value="140,160" />
+    <param name="context2_heart_rate_HighRisk1" value="160,300" />
 </launch>
