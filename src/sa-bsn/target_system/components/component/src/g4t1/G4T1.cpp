@@ -150,7 +150,7 @@ void G4T1::process(){
         patient_risk = "VERY CRITICAL RISK";
     }
 
-    /*ROS_INFO("*****************************************");
+    ROS_INFO("*****************************************");
     ROS_INFO("PatientStatusInfo#");
     ROS_INFO("| THERM_RISK: %s", std::to_string(trm_risk).c_str());
     ROS_INFO("| ECG_RISK: %s", std::to_string(ecg_risk).c_str());
@@ -159,8 +159,7 @@ void G4T1::process(){
     ROS_INFO("| ABPD_RISK: %s", std::to_string(abpd_risk).c_str());
     ROS_INFO("| GLC_RISK: %s", std::to_string(glc_risk).c_str());
     ROS_INFO("| PATIENT_STATE: %s", patient_risk.c_str());
-    ROS_INFO("*****************************************");*/
-    ROS_INFO("[RoME_LOG] PATIENT_STATE: %s", patient_risk.c_str());
+    ROS_INFO("*****************************************");
 }
 
 int32_t G4T1::getSensorId(std::string type) {
