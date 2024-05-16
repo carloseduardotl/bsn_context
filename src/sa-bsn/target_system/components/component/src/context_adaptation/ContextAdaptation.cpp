@@ -20,6 +20,8 @@ void ContextAdaptation::body() {
     ros::Rate loop_rate(rosComponentDescriptor.getFreq());
     while (ros::ok){
         ROS_INFO("Running");
+        monitor();
+        analyze();
         ros::spinOnce();
         loop_rate.sleep();            
     }   
@@ -34,31 +36,31 @@ void ContextAdaptation::setUpContext() {
 
     for (int i = 0; i < contexts.size(); i++) {
         for (const auto& risk : risks) {
-            std::string param_name = contexts[i] + "_heart_rate_" + risk;
+            std::string paramName = contexts[i] + "_heart_rate_" + risk;
             std::string s;
-            nh.getParam(param_name, s);
+            nh.getParam(paramName, s);
             std::vector<std::string> values = bsn::utils::split(s, ',');
 
             if (risk == "LowRisk") {
-                heart_rate_context[i].lowRisk[0] = std::stof(values[0]);
-                heart_rate_context[i].lowRisk[1] = std::stof(values[1]);
-                ROS_INFO("Setting up %s for %f, %f", param_name.c_str(), heart_rate_context[i].lowRisk[0], heart_rate_context[i].lowRisk[1]);
+                heartRateContext[i].lowRisk[0] = std::stof(values[0]);
+                heartRateContext[i].lowRisk[1] = std::stof(values[1]);
+                ROS_INFO("Setting up %s for %f, %f", paramName.c_str(), heartRateContext[i].lowRisk[0], heartRateContext[i].lowRisk[1]);
             } else if (risk == "MidRisk0") {
-                heart_rate_context[i].midRisk0[0] = std::stof(values[0]);
-                heart_rate_context[i].midRisk0[1] = std::stof(values[1]);
-                ROS_INFO("Setting up %s for %f, %f", param_name.c_str(), heart_rate_context[i].midRisk0[0], heart_rate_context[i].midRisk0[1]);
+                heartRateContext[i].midRisk0[0] = std::stof(values[0]);
+                heartRateContext[i].midRisk0[1] = std::stof(values[1]);
+                ROS_INFO("Setting up %s for %f, %f", paramName.c_str(), heartRateContext[i].midRisk0[0], heartRateContext[i].midRisk0[1]);
             } else if (risk == "MidRisk1") {
-                heart_rate_context[i].midRisk1[0] = std::stof(values[0]);
-                heart_rate_context[i].midRisk1[1] = std::stof(values[1]);
-                ROS_INFO("Setting up %s for %f, %f", param_name.c_str(), heart_rate_context[i].midRisk1[0], heart_rate_context[i].midRisk1[1]);
+                heartRateContext[i].midRisk1[0] = std::stof(values[0]);
+                heartRateContext[i].midRisk1[1] = std::stof(values[1]);
+                ROS_INFO("Setting up %s for %f, %f", paramName.c_str(), heartRateContext[i].midRisk1[0], heartRateContext[i].midRisk1[1]);
             } else if (risk == "HighRisk0") {
-                heart_rate_context[i].highRisk0[0] = std::stof(values[0]);
-                heart_rate_context[i].highRisk0[1] = std::stof(values[1]);
-                ROS_INFO("Setting up %s for %f, %f", param_name.c_str(), heart_rate_context[i].highRisk0[0], heart_rate_context[i].highRisk0[1]);
+                heartRateContext[i].highRisk0[0] = std::stof(values[0]);
+                heartRateContext[i].highRisk0[1] = std::stof(values[1]);
+                ROS_INFO("Setting up %s for %f, %f", paramName.c_str(), heartRateContext[i].highRisk0[0], heartRateContext[i].highRisk0[1]);
             } else if (risk == "HighRisk1") {
-                heart_rate_context[i].highRisk1[0] = std::stof(values[0]);
-                heart_rate_context[i].highRisk1[1] = std::stof(values[1]);
-                ROS_INFO("Setting up %s for %f, %f", param_name.c_str(), heart_rate_context[i].highRisk1[0], heart_rate_context[i].highRisk1[1]);
+                heartRateContext[i].highRisk1[0] = std::stof(values[0]);
+                heartRateContext[i].highRisk1[1] = std::stof(values[1]);
+                ROS_INFO("Setting up %s for %f, %f", paramName.c_str(), heartRateContext[i].highRisk1[0], heartRateContext[i].highRisk1[1]);
             }
         }
     }
@@ -69,24 +71,20 @@ void ContextAdaptation::tearDown() {
 }
 
 void ContextAdaptation::collect(const messages::TargetSystemData::ConstPtr& msg) {
-    float heart_rate[2], spo2[2];
-    heart_rate[0] = msg->ecg_data;
-    spo2[0] = msg->oxi_data;
-
-    heart_rate[1] = msg->ecg_risk;
-    spo2[1] = msg->oxi_risk;
-
-    float patient_risk = msg->patient_status;
-
-    if(heart_rate[1] > 60){
-        ROS_INFO("High heart_rate risk, maybe its another context\n risk = %.2f", heart_rate[1]);
-        if(heart_rate[0]<90) {
-            ROS_INFO("Maybe it is sleeping");
-        }
-        else {
-            ROS_INFO("Maybe it is exercising");
-        }
-    }
+    currentData.trm_risk = msg->trm_risk;
+    currentData.ecg_risk = msg->ecg_risk;
+    currentData.oxi_risk = msg->oxi_risk;
+    currentData.abps_risk = msg->abps_risk;
+    currentData.abpd_risk = msg->abpd_risk;
+    currentData.glc_risk = msg->glc_risk;
+    currentData.trm_data = msg->trm_data;
+    currentData.ecg_data = msg->ecg_data;
+    currentData.oxi_data = msg->oxi_data;
+    currentData.abps_data = msg->abps_data;
+    currentData.abpd_data = msg->abpd_data;
+    currentData.glc_data = msg->glc_data;
+    currentData.patient_status = msg->patient_status;
+    currentData.pending_analysis = true;
 }
 
 bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* MidRisk0, float* MidRisk1, float* highRisk0, float* highRisk1) {
@@ -121,6 +119,11 @@ void ContextAdaptation::monitor() {
 }
 
 void ContextAdaptation::analyze() {
+    if (currentData.pending_analysis) {
+        if (currentData.trm_risk >= 60) {
+            ROS_INFO("TRM Risk is high");
+        }
+    }
 
 }
 

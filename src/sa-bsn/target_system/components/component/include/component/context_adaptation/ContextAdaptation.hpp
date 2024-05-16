@@ -18,6 +18,23 @@ struct risk_values {
     float highRisk1[2];
 };
 
+struct TargetSystemData {
+    double trm_risk;
+    double ecg_risk;
+    double oxi_risk;
+    double abps_risk;
+    double abpd_risk;
+    double glc_risk;
+    double trm_data;
+    double ecg_data;
+    double oxi_data;
+    double abps_data;
+    double abpd_data;
+    double glc_data;
+    double patient_status;
+    bool pending_analysis;
+};
+
 class ContextAdaptation : public arch::ROSComponent {
     public:
         ContextAdaptation(int &argc, char **argv, std::string name);
@@ -34,7 +51,8 @@ class ContextAdaptation : public arch::ROSComponent {
 
         void setUpContext();
 
-        risk_values heart_rate_context[3];
+        risk_values heartRateContext[3];
+        TargetSystemData currentData;
 
         bool setRisks(std::string vitalSign,float* lowRisk, float* MidRisk0, float* MidRisk1, float* highRisk0, float* highRisk1);
 
