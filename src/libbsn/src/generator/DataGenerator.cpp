@@ -30,25 +30,25 @@ namespace bsn {
         }
 
         void DataGenerator::nextState() {
-            int32_t randomNumber = probabilityGenerator(seed);
-            // Calcula o offset do vetor baseado no estado
             int32_t offset = markovChain.currentState * 5;
+            double prob_0 = markovChain.transitions[offset+0];
+            double prob_1 = markovChain.transitions[offset+1];
+            double prob_2 = markovChain.transitions[offset+2];
+            double prob_3 = markovChain.transitions[offset+3];
+            double prob_4 = markovChain.transitions[offset+4];
             
-            if (randomNumber <= markovChain.transitions[offset]) {
-                markovChain.currentState = 0;                        
-            }    
-            else if (randomNumber <= markovChain.transitions[offset + 1]) {
-                markovChain.currentState = 1;             
-            }    
-            else if (randomNumber <= markovChain.transitions[offset + 2]) {
-                markovChain.currentState = 2;
-            }     
-            else if (randomNumber <= markovChain.transitions[offset + 3]) {
-                markovChain.currentState = 3;        
-            }    
-            else if (randomNumber <= markovChain.transitions[offset + 4]) {
-                markovChain.currentState = 4;
-            }
+            // Define the probabilities
+            std::vector<double> probabilities = {prob_0, prob_1, prob_2, prob_3,prob_4};
+            
+            // Define a discrete distribution based on the probabilities
+            std::discrete_distribution<> distribution(probabilities.begin(), probabilities.end());
+            
+            // Sample a number based on the given probabilities
+            int sampled_number = distribution(seed);
+
+            //arcs[markovChain.currentState][sampled_number]=1;
+       
+            markovChain.currentState = sampled_number;   
         }
 
         double DataGenerator::calculateValue() {
