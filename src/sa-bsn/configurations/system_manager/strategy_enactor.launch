@@ -1,5 +1,6 @@
 <launch> 
-    <node name="enactor" pkg="enactor" type="enactor" output="screen" />
+    <arg name="node_start_delay" default="7.0" />  
+    <node name="enactor" pkg="enactor" type="enactor" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
 
     <param name="frequency" value="1" />
     <param name="kp" value="150" />
