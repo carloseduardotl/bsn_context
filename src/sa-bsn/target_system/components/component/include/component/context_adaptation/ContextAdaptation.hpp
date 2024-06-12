@@ -48,10 +48,16 @@ class ContextAdaptation : public arch::ROSComponent {
 
         void monitor(const messages::TargetSystemData::ConstPtr& msg);
         ros::NodeHandle nh;
+        int currentContext;
 
         void setUpContext();
+        void updateRiskValues(risk_values& context, const std::string& risk, const std::vector<std::string>& values);
+        void printAllRiskValues();
+        void printRiskValues(const risk_values& values, const std::string& vitalName);
+
 
         risk_values heartRateContext[3];
+        risk_values oxigenationContext[3];
         TargetSystemData currentData;
 
         bool setRisks(std::string vitalSign,float* lowRisk, float* MidRisk0, float* MidRisk1, float* highRisk0, float* highRisk1);
