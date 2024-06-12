@@ -16,11 +16,10 @@ void ContextAdaptation::setUp() {
 }
 
 void ContextAdaptation::body() {
-    //ros::Subscriber TargetSystemDataSub = nh.subscribe("TargetSystemData", 10, &ContextAdaptation::collect, this);
+    ros::Subscriber TargetSystemDataSub = nh.subscribe("TargetSystemData", 10, &ContextAdaptation::monitor, this);
     ros::Rate loop_rate(rosComponentDescriptor.getFreq());
     while (ros::ok){
         ROS_INFO("Running");
-        monitor();
         analyze();
         ros::spinOnce();
         loop_rate.sleep();            
@@ -70,7 +69,7 @@ void ContextAdaptation::tearDown() {
     ROS_INFO("Tearing down");
 }
 
-void ContextAdaptation::collect(const messages::TargetSystemData::ConstPtr& msg) {
+void ContextAdaptation::monitor(const messages::TargetSystemData::ConstPtr& msg) {
     currentData.trm_risk = msg->trm_risk;
     currentData.ecg_risk = msg->ecg_risk;
     currentData.oxi_risk = msg->oxi_risk;
@@ -85,6 +84,8 @@ void ContextAdaptation::collect(const messages::TargetSystemData::ConstPtr& msg)
     currentData.glc_data = msg->glc_data;
     currentData.patient_status = msg->patient_status;
     currentData.pending_analysis = true;
+
+    ROS_INFO("Data collected");
 }
 
 bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* MidRisk0, float* MidRisk1, float* highRisk0, float* highRisk1) {
@@ -114,17 +115,12 @@ bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* M
     return false;
 }
 
-void ContextAdaptation::monitor() {
-
-}
-
 void ContextAdaptation::analyze() {
     if (currentData.pending_analysis) {
-        if (currentData.trm_risk >= 60) {
-            ROS_INFO("TRM Risk is high");
+        if (currentData.ecg_risk > 60) {
+            ROS_INFO("ECG Risk is high");
         }
     }
-
 }
 
 void ContextAdaptation::plan() {

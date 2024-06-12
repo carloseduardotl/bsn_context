@@ -46,7 +46,7 @@ class ContextAdaptation : public arch::ROSComponent {
 
     private:
 
-        void collect(const messages::TargetSystemData::ConstPtr& msg);
+        void monitor(const messages::TargetSystemData::ConstPtr& msg);
         ros::NodeHandle nh;
 
         void setUpContext();
@@ -56,7 +56,7 @@ class ContextAdaptation : public arch::ROSComponent {
 
         bool setRisks(std::string vitalSign,float* lowRisk, float* MidRisk0, float* MidRisk1, float* highRisk0, float* highRisk1);
 
-        void monitor();
+        //void monitor();
         void analyze();
         void plan();
         void execute();
