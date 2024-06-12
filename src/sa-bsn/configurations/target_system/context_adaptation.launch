@@ -3,6 +3,27 @@
     <param name="context_frequency" value="1" /> 
 
 
+    <!-- Risk values for oximeter -->
+    <param name="context0_oxigenation_HighRisk0" value="-1,-1" />
+    <param name="context0_oxigenation_MidRisk0" value="-1,-1" />
+    <param name="context0_oxigenation_LowRisk" value="65,100" />
+    <param name="context0_oxigenation_MidRisk1" value="55,65" />
+    <param name="context0_oxigenation_HighRisk1" value="0,55" />
+
+    <!-- Risk values for oximeter -->
+    <param name="context1_oxigenation_HighRisk0" value="-1,-1" />
+    <param name="context1_oxigenation_MidRisk0" value="-1,-1" />
+    <param name="context1_oxigenation_LowRisk" value="55,100" />
+    <param name="context1_oxigenation_MidRisk1" value="45,55" />
+    <param name="context1_oxigenation_HighRisk1" value="0,45" />
+
+    <!-- Risk values for oximeter -->
+    <param name="context2_oxigenation_HighRisk0" value="-1,-1" />
+    <param name="context2_oxigenation_MidRisk0" value="-1,-1" />
+    <param name="context2_oxigenation_LowRisk" value="85,100" />
+    <param name="context2_oxigenation_MidRisk1" value="75,85" />
+    <param name="context2_oxigenation_HighRisk1" value="0,75" />
+
     <!-- Risk values for heart frequency -->
     <param name="context0_heart_rate_HighRisk0" value="0,70" />
     <param name="context0_heart_rate_MidRisk0" value="70,85" />
