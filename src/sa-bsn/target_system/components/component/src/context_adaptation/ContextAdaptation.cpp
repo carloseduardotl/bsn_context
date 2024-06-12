@@ -43,19 +43,51 @@ void ContextAdaptation::setUpContext() {
             std::string heartRateParamName = contexts[i] + "_heart_rate_" + risk;
             std::string heartRateValuesStr;
             nh.getParam(heartRateParamName, heartRateValuesStr);
-            std::vector<std::string> heartRateValues = bsn::utils::split(heartRateValuesStr, ',');
+            std::vector<std::string> heartRateValues = bsn::utils::split(heartRateValuesStr, ',');            
+            // Atualiza os valores de risco para heartRateContext
+            updateRiskValues(heartRateContext[i], risk, heartRateValues);
+
 
             // Atualiza oxigenationContext
             std::string oxigenationParamName = contexts[i] + "_oxigenation_" + risk;
             std::string oxigenationValuesStr;
             nh.getParam(oxigenationParamName, oxigenationValuesStr);
             std::vector<std::string> oxigenationValues = bsn::utils::split(oxigenationValuesStr, ',');
-
-            // Atualiza os valores de risco para heartRateContext
-            updateRiskValues(heartRateContext[i], risk, heartRateValues);
-
             // Atualiza os valores de risco para oxigenationContext
             updateRiskValues(oxigenationContext[i], risk, oxigenationValues);
+
+            // Atualiza temperatureContext
+            std::string temperatureParamName = contexts[i] + "_temperature_" + risk;
+            std::string temperatureValuesStr;
+            nh.getParam(temperatureParamName, temperatureValuesStr);
+            std::vector<std::string> temperatureValues = bsn::utils::split(temperatureValuesStr, ',');
+            // Atualiza os valores de risco para temperatureContext
+            updateRiskValues(temperatureContext[i], risk, temperatureValues);
+
+            // Atualiza abpdContext
+            std::string abpdParamName = contexts[i] + "_abpd_" + risk;
+            std::string abpdValuesStr;
+            nh.getParam(abpdParamName, abpdValuesStr);
+            std::vector<std::string> abpdValues = bsn::utils::split(abpdValuesStr, ',');
+            // Atualiza os valores de risco para abpdContext
+            updateRiskValues(abpdContext[i], risk, abpdValues);
+
+            // Atualiza abpsContext
+            std::string abpsParamName = contexts[i] + "_abps_" + risk;
+            ROS_INFO("abpsParamName = %s", abpsParamName.c_str());
+            std::string abpsValuesStr;
+            nh.getParam(abpsParamName, abpsValuesStr);
+            std::vector<std::string> abpsValues = bsn::utils::split(abpsValuesStr, ',');
+            // Atualiza os valores de risco para abpsContext
+            updateRiskValues(abpsContext[i], risk, abpsValues);
+
+            // Atualiza glucoseContext
+            std::string glucoseParamName = contexts[i] + "_glucose_" + risk;
+            std::string glucoseValuesStr;
+            nh.getParam(glucoseParamName, glucoseValuesStr);
+            std::vector<std::string> glucoseValues = bsn::utils::split(glucoseValuesStr, ',');
+            // Atualiza os valores de risco para glucoseContext
+            updateRiskValues(glucoseContext[i], risk, glucoseValues);
         }
     }
 }
@@ -92,6 +124,10 @@ void ContextAdaptation::printAllRiskValues() {
     for (int i = 0; i < 3; ++i) {
         printRiskValues(heartRateContext[i], "Heart Rate Context " + std::to_string(i));
         printRiskValues(oxigenationContext[i], "Oxigenation Context " + std::to_string(i));
+        printRiskValues(temperatureContext[i], "Temperature Context " + std::to_string(i));
+        printRiskValues(abpdContext[i], "ABPD Context " + std::to_string(i));
+        printRiskValues(abpsContext[i], "ABPS Context " + std::to_string(i));
+        printRiskValues(glucoseContext[i], "Glucose Context " + std::to_string(i));
     }
 }
 
@@ -151,7 +187,10 @@ void ContextAdaptation::analyze() {
             ROS_INFO("ECG_data = %.2f, lowRisk = %.2f, %.2f", currentData.ecg_data, heartRateContext[i].lowRisk[0], heartRateContext[i].lowRisk[1]);
             if (currentData.ecg_data >= heartRateContext[i].lowRisk[0] && currentData.ecg_data <= heartRateContext[i].lowRisk[1]) {
                 ROS_INFO("ECG Data is low risk for context %d", i);
-                
+            }
+            ROS_INFO("Oxigenation_data = %.2f, lowRisk = %.2f, %.2f", currentData.oxi_data, oxigenationContext[i].lowRisk[0], oxigenationContext[i].lowRisk[1]);
+            if (currentData.oxi_data >= oxigenationContext[i].lowRisk[0] && currentData.oxi_data <= oxigenationContext[i].lowRisk[1]) {
+                ROS_INFO("Oxigenation Data is low risk for context %d", i);
             }
         }
     }

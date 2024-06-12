@@ -44,4 +44,90 @@
     <param name="context2_heart_rate_LowRisk" value="100,140" />
     <param name="context2_heart_rate_MidRisk1" value="140,160" />
     <param name="context2_heart_rate_HighRisk1" value="160,300" />
+
+    <!-- Risk values for temperature -->
+    <param name="context0_temperature_HighRisk0" value="0,31.99" />
+    <param name="context0_temperature_MidRisk0" value="32,35.99" />
+    <param name="context0_temperature_LowRisk" value="36,37.99" />
+    <param name="context0_temperature_MidRisk1" value="38,40.99" />
+    <param name="context0_temperature_HighRisk1" value="41,50" />
+
+    <!-- Risk values for temperature -->
+    <param name="context1_temperature_HighRisk0" value="0,29.99" />
+    <param name="context1_temperature_MidRisk0" value="30,33.99" />
+    <param name="context1_temperature_LowRisk" value="34,35.99" />
+    <param name="context1_temperature_MidRisk1" value="36,38.99" />
+    <param name="context1_temperature_HighRisk1" value="39,48" />
+
+    <!-- Risk values for temperature -->
+    <param name="context2_temperature_HighRisk0" value="0,32.99" />
+    <param name="context2_temperature_MidRisk0" value="33,36.99" />
+    <param name="context2_temperature_LowRisk" value="37,38.99" />
+    <param name="context2_temperature_MidRisk1" value="39,41.99" />
+    <param name="context2_temperature_HighRisk1" value="42,51" />
+
+    <!-- Risk values for diastolic pressure -->
+    <param name="context0_abpd_HighRisk0" value="-1,-1" />
+    <param name="context0_abpd_MidRisk0" value="-1,-1" />
+    <param name="context0_abpd_LowRisk" value="0,80" />
+    <param name="context0_abpd_MidRisk1" value="80,90" />
+    <param name="context0_abpd_HighRisk1" value="90,300" />
+
+    <!-- Risk values for diastolic pressure -->
+    <param name="context1_abpd_HighRisk0" value="-1,-1" />
+    <param name="context1_abpd_MidRisk0" value="-1,-1" />
+    <param name="context1_abpd_LowRisk" value="0,80" />
+    <param name="context1_abpd_MidRisk1" value="80,90" />
+    <param name="context1_abpd_HighRisk1" value="90,300" />
+
+    <!-- Risk values for diastolic pressure -->
+    <param name="context2_abpd_HighRisk0" value="-1,-1" />
+    <param name="context2_abpd_MidRisk0" value="-1,-1" />
+    <param name="context2_abpd_LowRisk" value="0,80" />
+    <param name="context2_abpd_MidRisk1" value="80,90" />
+    <param name="context2_abpd_HighRisk1" value="90,300" />
+
+    <!-- Risk values for systolic pressure -->
+    <param name="context0_abps_MidRisk0" value="-1,-1" />
+    <param name="context0_abps_HighRisk0" value="-1,-1" />
+    <param name="context0_abps_LowRisk" value="0,120" />
+    <param name="context0_abps_MidRisk1" value="120,140" />
+    <param name="context0_abps_HighRisk1" value="140,300" />
+
+    <!-- Risk values for systolic pressure -->
+    <param name="context1_abps_MidRisk0" value="-1,-1" />
+    <param name="context1_abps_HighRisk0" value="-1,-1" />
+    <param name="context1_abps_LowRisk" value="0,110" />
+    <param name="context1_abps_MidRisk1" value="110,130" />
+    <param name="context1_abps_HighRisk1" value="130,300" />
+
+    <!-- Risk values for systolic pressure -->
+    <param name="context2_abps_MidRisk0" value="-1,-1" />
+    <param name="context2_abps_HighRisk0" value="-1,-1" />
+    <param name="context2_abps_LowRisk" value="0,160" />
+    <param name="context2_abps_MidRisk1" value="160,170" />
+    <param name="context2_abps_HighRisk1" value="170,300" />
+
+    <!-- Risk values for glucose -->
+    <param name="context0_glucose_HighRisk0" value="20,39.99" />
+    <param name="context0_glucose_MidRisk0" value="40,54.99" />
+    <param name="context0_glucose_LowRisk" value="55,95.99" />
+    <param name="context0_glucose_MidRisk1" value="96,119.99" />
+    <param name="context0_glucose_HighRisk1" value="120,200" />
+
+    <!-- Risk values for glucose -->
+    <param name="context1_glucose_HighRisk0" value="20,30" />
+    <param name="context1_glucose_MidRisk0" value="30,45" />
+    <param name="context1_glucose_LowRisk" value="45,85" />
+    <param name="context1_glucose_MidRisk1" value="85,105" />
+    <param name="context1_glucose_HighRisk1" value="105,200" />
+
+    <!-- Risk values for glucose -->
+    <param name="context2_glucose_HighRisk0" value="25,35" />
+    <param name="context2_glucose_MidRisk0" value="35,50" />
+    <param name="context2_glucose_LowRisk" value="50,90" />
+    <param name="context2_glucose_MidRisk1" value="90,110" />
+    <param name="context2_glucose_HighRisk1" value="110,200" />
+
 </launch>
+
