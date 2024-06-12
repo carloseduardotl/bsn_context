@@ -10,7 +10,7 @@
 #include "messages/TargetSystemData.h"
 #include "services/PatientAdapt.h"
 
-struct risk_values {
+struct RiskValues {
     float lowRisk[2];
     float midRisk0[2];
     float midRisk1[2];
@@ -51,17 +51,19 @@ class ContextAdaptation : public arch::ROSComponent {
         int currentContext;
 
         void setUpContext();
-        void updateRiskValues(risk_values& context, const std::string& risk, const std::vector<std::string>& values);
+        void updateRiskValues(RiskValues& context, const std::string& risk, const std::vector<std::string>& values);
         void printAllRiskValues();
-        void printRiskValues(const risk_values& values, const std::string& vitalName);
+        void printRiskValues(const RiskValues& values, const std::string& vitalName);
+        int checkRisk(double data, const RiskValues context[]);
+        
 
 
-        risk_values heartRateContext[3];
-        risk_values oxigenationContext[3];
-        risk_values temperatureContext[3];
-        risk_values abpdContext[3];
-        risk_values abpsContext[3];
-        risk_values glucoseContext[3];
+        RiskValues heartRateContext[3];
+        RiskValues oxigenationContext[3];
+        RiskValues temperatureContext[3];
+        RiskValues abpdContext[3];
+        RiskValues abpsContext[3];
+        RiskValues glucoseContext[3];
         TargetSystemData currentData;
 
         bool setRisks(std::string vitalSign,float* lowRisk, float* MidRisk0, float* MidRisk1, float* highRisk0, float* highRisk1);

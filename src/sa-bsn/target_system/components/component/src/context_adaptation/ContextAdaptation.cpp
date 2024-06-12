@@ -92,7 +92,7 @@ void ContextAdaptation::setUpContext() {
     }
 }
 
-void ContextAdaptation::updateRiskValues(risk_values& context, const std::string& risk, const std::vector<std::string>& values) {
+void ContextAdaptation::updateRiskValues(RiskValues& context, const std::string& risk, const std::vector<std::string>& values) {
     if (risk == "LowRisk") {
         context.lowRisk[0] = std::stof(values[0]);
         context.lowRisk[1] = std::stof(values[1]);
@@ -111,7 +111,7 @@ void ContextAdaptation::updateRiskValues(risk_values& context, const std::string
     }
 }
 
-void ContextAdaptation::printRiskValues(const risk_values& values, const std::string& vitalName) {
+void ContextAdaptation::printRiskValues(const RiskValues& values, const std::string& vitalName) {
     ROS_INFO("Risk values for %s:", vitalName.c_str());
     ROS_INFO("High Risk 0: [%.2f, %.2f]", values.highRisk0[0], values.highRisk0[1]);
     ROS_INFO("Mid Risk 0: [%.2f, %.2f]", values.midRisk0[0], values.midRisk0[1]);
@@ -122,8 +122,8 @@ void ContextAdaptation::printRiskValues(const risk_values& values, const std::st
 
 void ContextAdaptation::printAllRiskValues() {
     for (int i = 0; i < 3; ++i) {
-        printRiskValues(heartRateContext[i], "Heart Rate Context " + std::to_string(i));
         printRiskValues(oxigenationContext[i], "Oxigenation Context " + std::to_string(i));
+        printRiskValues(heartRateContext[i], "Heart Rate Context " + std::to_string(i));
         printRiskValues(temperatureContext[i], "Temperature Context " + std::to_string(i));
         printRiskValues(abpdContext[i], "ABPD Context " + std::to_string(i));
         printRiskValues(abpsContext[i], "ABPS Context " + std::to_string(i));
@@ -182,18 +182,40 @@ bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* M
 }
 
 void ContextAdaptation::analyze() {
+    int context;
     if (currentData.ecg_risk > 60) {
-        for(int i = 0; i < 3; i++) {
-            ROS_INFO("ECG_data = %.2f, lowRisk = %.2f, %.2f", currentData.ecg_data, heartRateContext[i].lowRisk[0], heartRateContext[i].lowRisk[1]);
-            if (currentData.ecg_data >= heartRateContext[i].lowRisk[0] && currentData.ecg_data <= heartRateContext[i].lowRisk[1]) {
-                ROS_INFO("ECG Data is low risk for context %d", i);
-            }
-            ROS_INFO("Oxigenation_data = %.2f, lowRisk = %.2f, %.2f", currentData.oxi_data, oxigenationContext[i].lowRisk[0], oxigenationContext[i].lowRisk[1]);
-            if (currentData.oxi_data >= oxigenationContext[i].lowRisk[0] && currentData.oxi_data <= oxigenationContext[i].lowRisk[1]) {
-                ROS_INFO("Oxigenation Data is low risk for context %d", i);
-            }
+        context = checkRisk(currentData.ecg_data, heartRateContext);
+        if(context > 0) ROS_INFO("Heart Rate Data is low risk for context %d", context);
+    }
+    if (currentData.oxi_risk > 60) {
+        context = checkRisk(currentData.oxi_data, oxigenationContext);
+        if(context > 0) ROS_INFO("Oxigenation Data is low risk for context %d", context);
+    }
+    if(currentData.trm_risk > 60) {
+        context = checkRisk(currentData.trm_data, temperatureContext);
+        if(context > 0) ROS_INFO("Temperature Data is low risk for context %d", context);
+    }
+    if(currentData.abpd_risk > 60) {
+        context = checkRisk(currentData.abpd_data, abpdContext);
+        if(context > 0) ROS_INFO("ABPD Data is low risk for context %d", context);
+    }
+    if(currentData.abps_risk > 60) {
+        context = checkRisk(currentData.abps_data, abpsContext);
+        if(context > 0) ROS_INFO("ABPS Data is low risk for context %d", context);
+    }
+    if(currentData.glc_risk > 60) {
+        context = checkRisk(currentData.glc_data, glucoseContext);
+        if(context > 0) ROS_INFO("Glucose Data is low risk for context %d", context);
+    }
+}
+
+int ContextAdaptation::checkRisk(double data, const RiskValues context[]) {
+    for(int i = 0; i < 3; i++) {
+        if (data >= context[i].lowRisk[0] && data <= context[i].lowRisk[1]) {
+            return i;
         }
     }
+    return -1;
 }
 
 void ContextAdaptation::plan() {
