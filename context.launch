@@ -1,0 +1,7 @@
+<launch>
+ 
+    <!-- Make sure the absolut path is correct according to the execution environment  -->
+
+    <include file="./src/sa-bsn/configurations/target_system/context_adaptation.launch" />
+
+</launch>
