@@ -182,19 +182,35 @@ bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* M
 }
 
 void ContextAdaptation::analyze() {
+    // Target context is the context is the context with the risk above certain value (60) and with its corresponding data in low risk
     // Array with the number of contexts that are low risk for each vital sign, the index is the target context
-    int targetContextCount[3] = {0, 0,0 };
+    int targetContextCount[3] = {0, 0, 0};
     checkContext(currentData.ecg_risk, currentData.ecg_data, heartRateContext, "Heart Rate", targetContextCount);
     checkContext(currentData.oxi_risk, currentData.oxi_data, oxigenationContext, "Oxigenation", targetContextCount);
     checkContext(currentData.trm_risk, currentData.trm_data, temperatureContext, "Temperature", targetContextCount);
     checkContext(currentData.abpd_risk, currentData.abpd_data, abpdContext, "ABPD", targetContextCount);
     checkContext(currentData.abps_risk, currentData.abps_data, abpsContext, "ABPS", targetContextCount);
     checkContext(currentData.glc_risk, currentData.glc_data, glucoseContext, "Glucose", targetContextCount);
+    for(int i = 0; i < 3; i++) {
+        ROS_INFO("Context %d is low risk for %d vital signs", i, targetContextCount[i]);
+    }
+    int targetContext = -1;
+    int minCount = INT_MAX; // Inicializa com o maior valor possível
+
+    for (int i = 0; i < 3; i++) {
+        if (i != currentContext && targetContextCount[i] != 0 && targetContextCount[i] < minCount) {
+            minCount = targetContextCount[i];
+            targetContext = i;
+        }
+    }
+
+    if(targetContext != -1) plan(targetContext);
+    
 }
 
 void ContextAdaptation::checkContext(double risk, double data, const RiskValues context[], const char* contextName, int* targetContextCount) {
     if (risk > 60) {
-        int targetContext = checkRisk(data, context);
+        int targetContext = checkLowRisk(data, context);
         if (targetContext > 0 && targetContext != currentContext) {
             targetContextCount[targetContext]++;
             ROS_INFO("%s Data is low risk for context %d", contextName, targetContext);
@@ -202,7 +218,8 @@ void ContextAdaptation::checkContext(double risk, double data, const RiskValues 
     }
 }
 
-int ContextAdaptation::checkRisk(double data, const RiskValues context[]) {
+// Verifica se está em baixo risco
+int ContextAdaptation::checkLowRisk(double data, const RiskValues context[]) {
     for(int i = 0; i < 3; i++) {
         if (data >= context[i].lowRisk[0] && data <= context[i].lowRisk[1]) {
             return i;
@@ -211,10 +228,17 @@ int ContextAdaptation::checkRisk(double data, const RiskValues context[]) {
     return -1;
 }
 
-void ContextAdaptation::plan() {
-
+void ContextAdaptation::plan(const int targetContext) {
+    ROS_INFO("Selected target context: %d", targetContext);
+    execute(targetContext);
 }
 
-void ContextAdaptation::execute() {
-
+void ContextAdaptation::execute(const int targetContext) {
+    setRisks("oxigenation", oxigenationContext[targetContext].lowRisk, oxigenationContext[targetContext].midRisk0, oxigenationContext[targetContext].midRisk1, oxigenationContext[targetContext].highRisk0, oxigenationContext[targetContext].highRisk1);
+    setRisks("heart_rate", heartRateContext[targetContext].lowRisk, heartRateContext[targetContext].midRisk0, heartRateContext[targetContext].midRisk1, heartRateContext[targetContext].highRisk0, heartRateContext[targetContext].highRisk1);
+    setRisks("temperature", temperatureContext[targetContext].lowRisk, temperatureContext[targetContext].midRisk0, temperatureContext[targetContext].midRisk1, temperatureContext[targetContext].highRisk0, temperatureContext[targetContext].highRisk1);
+    setRisks("abpd", abpdContext[targetContext].lowRisk, abpdContext[targetContext].midRisk0, abpdContext[targetContext].midRisk1, abpdContext[targetContext].highRisk0, abpdContext[targetContext].highRisk1);
+    setRisks("abps", abpsContext[targetContext].lowRisk, abpsContext[targetContext].midRisk0, abpsContext[targetContext].midRisk1, abpsContext[targetContext].highRisk0, abpsContext[targetContext].highRisk1);
+    setRisks("glucose", glucoseContext[targetContext].lowRisk, glucoseContext[targetContext].midRisk0, glucoseContext[targetContext].midRisk1, glucoseContext[targetContext].highRisk0, glucoseContext[targetContext].highRisk1);
+    currentContext = targetContext;
 }
