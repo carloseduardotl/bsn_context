@@ -182,30 +182,50 @@ bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* M
 }
 
 void ContextAdaptation::analyze() {
-    int context;
+    int targetContext;
+    // Array whit the number of contexts that are low risk for each vital sign, the index is the target context
+    int targetContextCount[3] = {0, 0,0 };
     if (currentData.ecg_risk > 60) {
-        context = checkRisk(currentData.ecg_data, heartRateContext);
-        if(context > 0) ROS_INFO("Heart Rate Data is low risk for context %d", context);
+        targetContext = checkRisk(currentData.ecg_data, heartRateContext);
+        if(targetContext > 0 && targetContext != currentContext) {
+            targetContextCount[targetContext]++;
+            ROS_INFO("Heart Rate Data is low risk for context %d", targetContext);
+        }
     }
     if (currentData.oxi_risk > 60) {
-        context = checkRisk(currentData.oxi_data, oxigenationContext);
-        if(context > 0) ROS_INFO("Oxigenation Data is low risk for context %d", context);
+        targetContext = checkRisk(currentData.oxi_data, oxigenationContext);
+        if(targetContext > 0 && targetContext != currentContext) {
+            targetContextCount[targetContext]++;
+            ROS_INFO("Oxigenation Data is low risk for context %d", targetContext);
+        }
     }
     if(currentData.trm_risk > 60) {
-        context = checkRisk(currentData.trm_data, temperatureContext);
-        if(context > 0) ROS_INFO("Temperature Data is low risk for context %d", context);
+        targetContext = checkRisk(currentData.trm_data, temperatureContext);
+        if(targetContext > 0 && targetContext != currentContext) {
+            targetContextCount[targetContext]++;
+            ROS_INFO("Temperature Data is low risk for context %d", targetContext);
+        }
     }
     if(currentData.abpd_risk > 60) {
-        context = checkRisk(currentData.abpd_data, abpdContext);
-        if(context > 0) ROS_INFO("ABPD Data is low risk for context %d", context);
+        targetContext = checkRisk(currentData.abpd_data, abpdContext);
+        if(targetContext > 0 && targetContext != currentContext) {
+            targetContextCount[targetContext]++;
+            ROS_INFO("ABPD Data is low risk for context %d", targetContext);
+        }
     }
     if(currentData.abps_risk > 60) {
-        context = checkRisk(currentData.abps_data, abpsContext);
-        if(context > 0) ROS_INFO("ABPS Data is low risk for context %d", context);
+        targetContext = checkRisk(currentData.abps_data, abpsContext);
+        if(targetContext > 0 && targetContext != currentContext) {
+            targetContextCount[targetContext]++;
+            ROS_INFO("ABPS Data is low risk for context %d", targetContext);
+        }
     }
     if(currentData.glc_risk > 60) {
-        context = checkRisk(currentData.glc_data, glucoseContext);
-        if(context > 0) ROS_INFO("Glucose Data is low risk for context %d", context);
+        targetContext = checkRisk(currentData.glc_data, glucoseContext);
+        if(targetContext > 0 && targetContext != currentContext) {
+            targetContextCount[targetContext]++;
+            ROS_INFO("Glucose Data is low risk for context %d", targetContext);
+        }
     }
 }
 
