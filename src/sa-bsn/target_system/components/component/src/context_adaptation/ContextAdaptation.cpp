@@ -210,26 +210,34 @@ void ContextAdaptation::analyze() {
 
 void ContextAdaptation::checkContext(double risk, double data, const RiskValues context[], const char* contextName, int* targetContextCount) {
     if (risk > 60) {
-        int targetContext = checkLowRisk(data, context);
-        if (targetContext > 0 && targetContext != currentContext) {
-            targetContextCount[targetContext]++;
-            ROS_INFO("%s Data is low risk for context %d", contextName, targetContext);
+        ROS_INFO("%s Data is high risk, Data = %.2lf", contextName, data);
+        for(int i = 0; i < 3; i++) {
+            if(checkLowRisk(data, context, i) && i != currentContext){            
+            targetContextCount[i]++;
+            ROS_INFO("%s Data is low risk for context %d", contextName, i);}
         }
     }
 }
 
 // Verifica se está em baixo risco
-int ContextAdaptation::checkLowRisk(double data, const RiskValues context[]) {
-    for(int i = 0; i < 3; i++) {
-        if (data >= context[i].lowRisk[0] && data <= context[i].lowRisk[1]) {
-            return i;
-        }
+bool ContextAdaptation::checkLowRisk(double data, const RiskValues sesnorContext[], const int context) {
+    ROS_INFO("Data = %.2lf, LowRisk = [%.2f, %.2f]", data, sesnorContext[context].lowRisk[0], sesnorContext[context].lowRisk[1]);
+    if (data >= sesnorContext[context].lowRisk[0] && data <= sesnorContext[context].lowRisk[1]) {
+        return true;
     }
-    return -1;
+    return false;
 }
 
 void ContextAdaptation::plan(const int targetContext) {
-    ROS_INFO("Selected target context: %d", targetContext);
+    /*ROS_INFO("Selected target context: %d", targetContext);
+    if(checkLowRisk(currentData.ecg_data, heartRateContext) == targetContext) {
+        ROS_INFO("Heart Rate Data is low risk for context %d", targetContext);
+    }
+    checkLowRisk(currentData.oxi_data, oxigenationContext)
+    checkLowRisk(currentData.trm_data, temperatureContext)
+    checkLowRisk(currentData.abpd_data, abpdContext)
+    checkLowRisk(currentData.abps_data, abpsContext)
+    checkLowRisk(currentData.glc_data, glucoseContext)*/
     execute(targetContext);
 }
 
