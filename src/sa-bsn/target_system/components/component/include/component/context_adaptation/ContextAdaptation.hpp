@@ -55,8 +55,7 @@ class ContextAdaptation : public arch::ROSComponent {
         void printAllRiskValues();
         void printRiskValues(const RiskValues& values, const std::string& vitalName);
         int checkRisk(double data, const RiskValues context[]);
-        
-
+        void checkContext(double risk, double data, const RiskValues context[], const char* contextName, int* targetContextCount);
 
         RiskValues heartRateContext[3];
         RiskValues oxigenationContext[3];
