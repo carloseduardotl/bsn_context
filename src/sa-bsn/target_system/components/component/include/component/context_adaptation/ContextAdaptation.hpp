@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <string>
+#include <unordered_map>
 
 #include "archlib/ROSComponent.hpp"
 #include "libbsn/utils/utils.hpp"
@@ -56,6 +57,7 @@ class ContextAdaptation : public arch::ROSComponent {
         void printRiskValues(const RiskValues& values, const std::string& vitalName);
         bool checkLowRisk(double data, const RiskValues sensorContext[], const int context);
         void checkContext(double risk, double data, const RiskValues context[], const char* contextName, int* targetContextCount);
+        std::vector<int> findTargetContextAndRepeatedValues(const int targetContextCount[3], int currentContext, int* targetContext);
 
         RiskValues heartRateContext[3];
         RiskValues oxigenationContext[3];

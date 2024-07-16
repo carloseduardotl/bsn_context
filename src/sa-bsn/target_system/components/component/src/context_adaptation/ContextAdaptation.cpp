@@ -194,17 +194,23 @@ void ContextAdaptation::analyze() {
     for(int i = 0; i < 3; i++) {
         ROS_INFO("Context %d is low risk for %d vital signs", i, targetContextCount[i]);
     }
+    
     int targetContext = -1;
-    int minCount = INT_MAX; // Inicializa com o maior valor possível
 
-    for (int i = 0; i < 3; i++) {
-        if (i != currentContext && targetContextCount[i] != 0 && targetContextCount[i] < minCount) {
-            minCount = targetContextCount[i];
-            targetContext = i;
-        }
+    std::vector<int> repeatedIndex = findTargetContextAndRepeatedValues(targetContextCount, currentContext, &targetContext);
+
+    if(targetContext == -1) {
+        ROS_INFO("No target context found");
+        return;
     }
 
-    if(targetContext != -1) plan(targetContext);
+    if(targetContext != -1) {
+        if(repeatedIndex.empty()) {
+            plan(targetContext);
+        } else {
+            ROS_INFO("Multiple target contexts found");
+        }
+    }
     
 }
 
@@ -228,11 +234,53 @@ bool ContextAdaptation::checkLowRisk(double data, const RiskValues sesnorContext
     return false;
 }
 
+std::vector<int> ContextAdaptation::findTargetContextAndRepeatedValues(const int targetContextCount[3], int currentContext, int* targetContext) {
+    int minCount = INT_MAX; // Inicializa com o maior valor possível
+    std::unordered_map<int, std::vector<int>> valueIndex;
+    std::vector<int> repeatedIndex;
+
+    // Iterar pelo array targetContextCount
+    for (int i = 0; i < 3; i++) {
+        // Atualizar o mapa de frequência e armazenar os índices
+        valueIndex[targetContextCount[i]].push_back(i);
+
+        // Verificar e atualizar minCount e targetContext
+        if (i != currentContext && targetContextCount[i] != 0 && targetContextCount[i] < minCount) {
+            minCount = targetContextCount[i];
+            *targetContext = i;
+        }
+    }
+
+    if(*targetContext == -1) {
+        return repeatedIndex;
+    }
+
+    // Encontrar índices de valores que aparecem mais de uma vez e são os menores valores diferentes de 0
+    for (const auto& pair : valueIndex) {
+        if (pair.second.size() > 1 && pair.first == minCount && pair.first != 0) {
+            repeatedIndex.insert(repeatedIndex.end(), pair.second.begin(), pair.second.end());
+        }
+    }
+
+    // Imprimir targetContext e índices dos valores repetidos
+    ROS_INFO("Target Context: %d", *targetContext);
+
+    std::stringstream ss;
+    ss << "Indices dos valores repetidos: ";
+    for (int index : repeatedIndex) {
+        ss << index << " ";
+    }
+    ROS_INFO("%s", ss.str().c_str());
+
+    return repeatedIndex;
+}
+
 void ContextAdaptation::plan(const int targetContext) {
-    /*ROS_INFO("Selected target context: %d", targetContext);
-    if(checkLowRisk(currentData.ecg_data, heartRateContext) == targetContext) {
+    ROS_INFO("Selected target context: %d", targetContext);
+    if(checkLowRisk(currentData.ecg_data, heartRateContext, targetContext)) {
         ROS_INFO("Heart Rate Data is low risk for context %d", targetContext);
     }
+    /*
     checkLowRisk(currentData.oxi_data, oxigenationContext)
     checkLowRisk(currentData.trm_data, temperatureContext)
     checkLowRisk(currentData.abpd_data, abpdContext)
