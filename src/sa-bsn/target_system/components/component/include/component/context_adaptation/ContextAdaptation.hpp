@@ -58,6 +58,7 @@ class ContextAdaptation : public arch::ROSComponent {
         bool checkLowRisk(double data, const RiskValues sensorContext[], const int context);
         void checkContext(double risk, double data, const RiskValues context[], const char* contextName, int* targetContextCount);
         std::vector<int> findTargetContextAndRepeatedValues(const int targetContextCount[3], int currentContext, int* targetContext);
+        bool checkLowOrMidRisk(double data, const RiskValues sensorContext[], const int context);
 
         RiskValues heartRateContext[3];
         RiskValues oxigenationContext[3];

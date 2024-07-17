@@ -209,6 +209,7 @@ void ContextAdaptation::analyze() {
             plan(targetContext);
         } else {
             ROS_INFO("Multiple target contexts found");
+            // Insert plan function for multple contexts
         }
     }
     
@@ -277,16 +278,61 @@ std::vector<int> ContextAdaptation::findTargetContextAndRepeatedValues(const int
 
 void ContextAdaptation::plan(const int targetContext) {
     ROS_INFO("Selected target context: %d", targetContext);
-    if(checkLowRisk(currentData.ecg_data, heartRateContext, targetContext)) {
-        ROS_INFO("Heart Rate Data is low risk for context %d", targetContext);
+
+    if (checkLowOrMidRisk(currentData.ecg_data, heartRateContext, targetContext)) {
+        ROS_INFO("Heart Rate Data is low or mid risk for context %d", targetContext);
+    } else {
+        //ROS_INFO("Heart Rate Data is not low or mid risk for context %d", targetContext);
+        return; // Retorna se a checagem falhar
     }
-    /*
-    checkLowRisk(currentData.oxi_data, oxigenationContext)
-    checkLowRisk(currentData.trm_data, temperatureContext)
-    checkLowRisk(currentData.abpd_data, abpdContext)
-    checkLowRisk(currentData.abps_data, abpsContext)
-    checkLowRisk(currentData.glc_data, glucoseContext)*/
+
+    if (checkLowOrMidRisk(currentData.oxi_data, oxigenationContext, targetContext)) {
+        ROS_INFO("Oxygenation Data is low or mid risk for context %d", targetContext);
+    } else {
+        //ROS_INFO("Oxygenation Data is not low or mid risk for context %d", oxigenationContext);
+        return; // Retorna se a checagem falhar
+    }
+
+    if (checkLowOrMidRisk(currentData.trm_data, temperatureContext, targetContext)) {
+        ROS_INFO("Temperature Data is low or mid risk for context %d", targetContext);
+    } else {
+        //ROS_INFO("Temperature Data is not low or mid risk for context %d", temperatureContext);
+        return; // Retorna se a checagem falhar
+    }
+
+    if (checkLowOrMidRisk(currentData.abpd_data, abpdContext, targetContext)) {
+        ROS_INFO("ABPD Data is low or mid risk for context %d", targetContext);
+    } else {
+        //ROS_INFO("ABPD Data is not low or mid risk for context %d", abpdContext);
+        return; // Retorna se a checagem falhar
+    }
+
+    if (checkLowOrMidRisk(currentData.abps_data, abpsContext, targetContext)) {
+        ROS_INFO("ABPS Data is low or mid risk for context %d", targetContext);
+    } else {
+        //ROS_INFO("ABPS Data is not low or mid risk for context %d", abpsContext);
+        return; // Retorna se a checagem falhar
+    }
+
+    if (checkLowOrMidRisk(currentData.glc_data, glucoseContext, targetContext)) {
+        ROS_INFO("Glucose Data is low or mid risk for context %d", targetContext);
+    } else {
+        //ROS_INFO("Glucose Data is not low or mid risk for context %d", glucoseContext);
+        return; // Retorna se a checagem falhar
+    }
     execute(targetContext);
+}
+
+bool ContextAdaptation::checkLowOrMidRisk(double data, const RiskValues sensorContext[], const int context) {
+    ROS_INFO("Data = %.2lf, LowRisk = [%.2f, %.2f], MidRisk0 = [%.2f, %.2f], MidRisk1 = [%.2f, %.2f]", data, sensorContext[context].lowRisk[0], sensorContext[context].lowRisk[1], sensorContext[context].midRisk0[0], sensorContext[context].midRisk0[1], sensorContext[context].midRisk1[0], sensorContext[context].midRisk1[1]);
+    if (data >= sensorContext[context].lowRisk[0] && data <= sensorContext[context].lowRisk[1]) {
+        return true;
+    } else if (data >= sensorContext[context].midRisk0[0] && data <= sensorContext[context].midRisk0[1]) {
+        return true;
+    } else if (data >= sensorContext[context].midRisk1[0] && data <= sensorContext[context].midRisk1[1]) {
+        return true;
+    }
+    return false;
 }
 
 void ContextAdaptation::execute(const int targetContext) {
