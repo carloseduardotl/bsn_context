@@ -335,6 +335,20 @@ bool ContextAdaptation::checkLowOrMidRisk(double data, const RiskValues sensorCo
     return false;
 }
 
+double ContextAdaptation::calculateDisplacement(double data, const RiskValues sensorContext[], const int context) {
+    double lowerBound, upperBound;
+    if(sensorContext[context].midRisk0[0] == -1) lowerBound = sensorContext[context].lowRisk[0];
+    else lowerBound = sensorContext[context].midRisk0[0];
+
+    upperBound = sensorContext[context].midRisk1[1];
+
+    ROS_INFO("Data = %.2lf, MidRisk[%.2lf, %.2lf]", data, lowerBound, upperBound);
+    if(data >= lowerBound && data <= upperBound) {
+        return (data - lowerBound) / (upperBound - lowerBound);
+    }
+    return -1;
+}
+
 void ContextAdaptation::execute(const int targetContext) {
     setRisks("oxigenation", oxigenationContext[targetContext].lowRisk, oxigenationContext[targetContext].midRisk0, oxigenationContext[targetContext].midRisk1, oxigenationContext[targetContext].highRisk0, oxigenationContext[targetContext].highRisk1);
     setRisks("heart_rate", heartRateContext[targetContext].lowRisk, heartRateContext[targetContext].midRisk0, heartRateContext[targetContext].midRisk1, heartRateContext[targetContext].highRisk0, heartRateContext[targetContext].highRisk1);
