@@ -74,6 +74,7 @@ class ContextAdaptation : public arch::ROSComponent {
         //void monitor();
         void analyze();
         void plan(const int targetContext);
+        void plan(const std::vector<int> repeatedContexts);
         void execute(const int targetContext);
 
 };
