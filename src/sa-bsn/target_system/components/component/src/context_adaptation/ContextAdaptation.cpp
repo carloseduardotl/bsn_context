@@ -303,6 +303,7 @@ void ContextAdaptation::plan(const int targetContext) {
 void ContextAdaptation::plan(const std::vector<int> repeatedContexts) {
     std::vector<std::pair<int, double>> contextDisplacements;
     for (int context : repeatedContexts) {
+        ROS_INFO("Checking displaments for context %d", context);
         double displacements[6];
         displacements[0] = calculateDisplacement(currentData.ecg_data, heartRateContext, context);
         displacements[1] = calculateDisplacement(currentData.oxi_data, oxigenationContext, context);
@@ -310,8 +311,6 @@ void ContextAdaptation::plan(const std::vector<int> repeatedContexts) {
         displacements[3] = calculateDisplacement(currentData.abpd_data, abpdContext, context);
         displacements[4] = calculateDisplacement(currentData.abps_data, abpsContext, context);
         displacements[5] = calculateDisplacement(currentData.glc_data, glucoseContext, context);
-
-        // Outra estrategia seria utilizar o maior desvio
 
         // Check if there is any invalid displacement
         bool hasInvalidDisplacement = false;
@@ -327,28 +326,30 @@ void ContextAdaptation::plan(const std::vector<int> repeatedContexts) {
             continue;
         }
 
-        // Calculate average displacement
-        double sum = 0.0;
-        for (int i = 0; i < 6; i++) {
-            sum += displacements[i];
-        }
-        double averageDisplacement = sum / 6;
 
-        // Store context and average displacement
-        contextDisplacements.push_back(std::make_pair(context, averageDisplacement));
+        // Store the highest displacement
+        double selectedDisplacement = 0.0;
+        for (int i = 0; i < 6; i++) {
+            if (displacements[i] > selectedDisplacement) {
+                selectedDisplacement = displacements[i];
+            }
+        }
+
+        // Store context and displacement
+        contextDisplacements.push_back(std::make_pair(context, selectedDisplacement));
     }
     // Print context and average displacement
-    int minDisplacementContext = -1;
-    double minDisplacement = DBL_MAX;
+    int maxDisplacementContext = -1;
+    double maxDisplacement = 0;
     for (const auto& contextDisplacement : contextDisplacements) {
-        ROS_INFO("Context: %d, Average Displacement: %.2lf", contextDisplacement.first, contextDisplacement.second);
-        if(contextDisplacement.second < minDisplacement) {
-            minDisplacement = contextDisplacement.second;
-            minDisplacementContext = contextDisplacement.first;
+        ROS_INFO("Context: %d, Higher Displacement: %.2lf", contextDisplacement.first, contextDisplacement.second);
+        if(contextDisplacement.second > maxDisplacement) {
+            maxDisplacement = contextDisplacement.second;
+            maxDisplacementContext = contextDisplacement.first;
         }
     }
-    if(minDisplacementContext != -1) {
-        execute(minDisplacementContext);
+    if(maxDisplacementContext != -1) {
+        execute(maxDisplacementContext);
     }
     else {
         ROS_INFO("No context was found to execute");
@@ -370,15 +371,37 @@ bool ContextAdaptation::checkLowOrMidRisk(double data, const RiskValues sensorCo
 double ContextAdaptation::calculateDisplacement(double data, const RiskValues sensorContext[], const int context) {
     double lowerBound, upperBound;
     // Check if midRisk0 is not set (oxigenation, abps and abpd)
-    if(sensorContext[context].midRisk0[0] == -1) lowerBound = sensorContext[context].lowRisk[0];
-    else lowerBound = sensorContext[context].midRisk0[0];
-
-    upperBound = sensorContext[context].midRisk1[1];
-    // Check if is oxigenation
-    if(upperBound == lowerBound){
-        lowerBound = sensorContext[context].midRisk1[0];
-        upperBound = sensorContext[context].lowRisk[1];
+    if(sensorContext[context].midRisk0[0] == -1) {
+        if(sensorContext[context].lowRisk[1] > sensorContext[context].midRisk1[0]) {
+            // Limite superior (oxi)
+            upperBound = sensorContext[context].lowRisk[1];
+            lowerBound = sensorContext[context].midRisk1[0];
+            ROS_INFO("Data = %.2lf, MidRisk[%.2lf, %.2lf]", data, lowerBound, upperBound);
+            if(data > upperBound || data < lowerBound) {
+                ROS_INFO("Data is not in mid risk");
+                return -1;
+            }
+            double displacement = (upperBound - data) / (upperBound - lowerBound);
+            ROS_INFO("Displacement = %.2lf", displacement);
+            return displacement;
+        }
+        else if(sensorContext[context].midRisk1[1] > sensorContext[context].lowRisk[0]) {
+            // Limite inferior (apbs e apbd)
+            lowerBound = sensorContext[context].lowRisk[0];
+            upperBound = sensorContext[context].midRisk1[1];
+            ROS_INFO("Data = %.2lf, MidRisk[%.2lf, %.2lf]", data, lowerBound, upperBound);
+            if(data > upperBound || data < lowerBound) {
+                ROS_INFO("Data is not in mid risk");
+                return -1;
+            }
+            double displacement = (data - lowerBound) / (upperBound - lowerBound);
+            ROS_INFO("Displacement = %.2lf", displacement);
+            return displacement;
+        }
     }
+    // Centralidade
+    upperBound = sensorContext[context].midRisk1[1];
+    lowerBound = sensorContext[context].midRisk0[0];
 
     ROS_INFO("Data = %.2lf, MidRisk[%.2lf, %.2lf]", data, lowerBound, upperBound);
     if(data >= lowerBound && data <= upperBound) {
