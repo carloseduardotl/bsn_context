@@ -14,6 +14,8 @@ void ContextAdaptation::setUp() {
     rosComponentDescriptor.setFreq(freq);
     setUpContext();
     printAllRiskValues();
+    nh.getParam("adapt_risk_threshold", riskThreshold);
+    ROS_INFO("Risk Threshold = %d", riskThreshold);
     currentContext = 0;
 }
 
@@ -183,6 +185,7 @@ bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* M
 
 void ContextAdaptation::analyze() {
     // Target context is the context is the context with the risk above certain value (60) and with its corresponding data in low risk
+
     // Array with the number of contexts that are low risk for each vital sign, the index is the target context
     int targetContextCount[3] = {0, 0, 0};
     checkContext(currentData.ecg_risk, currentData.ecg_data, heartRateContext, "Heart Rate", targetContextCount);
@@ -217,7 +220,7 @@ void ContextAdaptation::analyze() {
 }
 
 void ContextAdaptation::checkContext(double risk, double data, const RiskValues context[], const char* contextName, int* targetContextCount) {
-    if (risk > 60) {
+    if (risk > riskThreshold) {
         ROS_INFO("%s Data is high risk, Data = %.2lf", contextName, data);
         for(int i = 0; i < 3; i++) {
             if(checkLowRisk(data, context, i) && i != currentContext){            
@@ -246,7 +249,7 @@ std::vector<int> ContextAdaptation::findTargetContextAndRepeatedValues(const int
         // Atualizar o mapa de frequência e armazenar os índices
         valueIndex[targetContextCount[i]].push_back(i);
 
-        // Verificar e atualizar minCount e targetContext
+        // Caso  contagem do contexto atual seja a menor, nao sendo 0, é armazenado no targetContext o contexto com a menor contagem
         if (i != currentContext && targetContextCount[i] != 0 && targetContextCount[i] < minCount) {
             minCount = targetContextCount[i];
             *targetContext = i;

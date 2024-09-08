@@ -50,6 +50,7 @@ class ContextAdaptation : public arch::ROSComponent {
         void monitor(const messages::TargetSystemData::ConstPtr& msg);
         ros::NodeHandle nh;
         int currentContext;
+        int riskThreshold;
 
         void setUpContext();
         void updateRiskValues(RiskValues& context, const std::string& risk, const std::vector<std::string>& values);
