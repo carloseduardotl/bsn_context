@@ -5,6 +5,7 @@
 #include <ros/console.h>
 #include <string>
 #include <unordered_map>
+#include <queue>
 
 #include "archlib/ROSComponent.hpp"
 #include "libbsn/utils/utils.hpp"
@@ -51,9 +52,12 @@ class ContextAdaptation : public arch::ROSComponent {
         ros::NodeHandle nh;
         int currentContext;
         int riskThreshold;
+        int queueSize;
+        std::map<std::string, std::queue<float>> targetSystemQueue;
 
         void setUpContext();
         void updateRiskValues(RiskValues& context, const std::string& risk, const std::vector<std::string>& values);
+        float pushQueueCalculateMean(std::string vitalSign, float data);
         void printAllRiskValues();
         void printRiskValues(const RiskValues& values, const std::string& vitalName);
         bool checkLowRisk(double data, const RiskValues sensorContext[], const int context);

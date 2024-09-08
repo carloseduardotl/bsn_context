@@ -15,7 +15,8 @@ void ContextAdaptation::setUp() {
     setUpContext();
     printAllRiskValues();
     nh.getParam("adapt_risk_threshold", riskThreshold);
-    ROS_INFO("Risk Threshold = %d", riskThreshold);
+    nh.getParam("number_of_last_readings", queueSize);
+    ROS_INFO("Risk Threshold = %d Queue size = %d", riskThreshold, queueSize);
     currentContext = 0;
 }
 
@@ -144,16 +145,31 @@ void ContextAdaptation::monitor(const messages::TargetSystemData::ConstPtr& msg)
     currentData.abps_risk = msg->abps_risk;
     currentData.abpd_risk = msg->abpd_risk;
     currentData.glc_risk = msg->glc_risk;
-    currentData.trm_data = msg->trm_data;
-    currentData.ecg_data = msg->ecg_data;
-    currentData.oxi_data = msg->oxi_data;
-    currentData.abps_data = msg->abps_data;
-    currentData.abpd_data = msg->abpd_data;
-    currentData.glc_data = msg->glc_data;
+    currentData.trm_data = pushQueueCalculateMean("temperature", msg->trm_data);
+    currentData.ecg_data = pushQueueCalculateMean("heart_rate", msg->ecg_data);
+    currentData.oxi_data = pushQueueCalculateMean("oxigenation", msg->oxi_data);
+    currentData.abps_data = pushQueueCalculateMean("apbs", msg->abps_data);
+    currentData.abpd_data = pushQueueCalculateMean("apbd", msg->abps_data);
+    currentData.glc_data = pushQueueCalculateMean("glucose", msg->abps_data);
     currentData.patient_status = msg->patient_status;
     currentData.pending_analysis = true;
 
     ROS_INFO("Data collected");
+}
+
+float ContextAdaptation::pushQueueCalculateMean(std::string vitalSign, float data) {
+    if(targetSystemQueue[vitalSign].size() == queueSize) {
+        targetSystemQueue[vitalSign].pop();
+    }
+    targetSystemQueue[vitalSign].push(data);
+    float sum = 0;
+    for(int i = 0; i < targetSystemQueue[vitalSign].size(); i++) {
+        sum += targetSystemQueue[vitalSign].front();
+        targetSystemQueue[vitalSign].push(targetSystemQueue[vitalSign].front());
+        targetSystemQueue[vitalSign].pop();
+    }
+    //ROS_INFO("Queue_size = %d, vital sign = %s, mean = %.2f", (int) targetSystemQueue[vitalSign].size(), vitalSign.c_str(), sum / targetSystemQueue[vitalSign].size());
+    return sum / targetSystemQueue[vitalSign].size();
 }
 
 bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* MidRisk0, float* MidRisk1, float* highRisk0, float* highRisk1) {

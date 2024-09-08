@@ -2,8 +2,9 @@
     <node name="context_adaptation" pkg="component" type="context_adaptation" output="screen" />
     <param name="context_frequency" value="1" /> 
 
-    <!-- Risk threshold-->
+    <!-- Risk threshold  and queue size-->
     <param name="adapt_risk_threshold" value="60" />
+    <param name="number_of_last_readings" value="10" />
 
     <!-- Risk values for oximeter -->
     <param name="context0_oxigenation_HighRisk0" value="-1,-1" />
