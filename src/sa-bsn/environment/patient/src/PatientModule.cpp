@@ -146,6 +146,9 @@ bool PatientModule::setAdaptation(services::PatientAdapt::Request &request, serv
     nh.setParam(vitalSign + "_HighRisk1", aux.str().c_str());
     ROS_INFO("%s_HighRisk1 = %s", vitalSign.c_str(), aux.str().c_str());
     
+    // Configuring data generator
+    patientData[vitalSign] = configureDataGenerator(vitalSign);
+
     response.set = true;
     return true;
 }
