@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <queue>
+#include <vector>
 
 #include "archlib/ROSComponent.hpp"
 #include "libbsn/utils/utils.hpp"
@@ -62,7 +63,6 @@ class ContextAdaptation : public arch::ROSComponent {
         void printRiskValues(const RiskValues& values, const std::string& vitalName);
         bool checkLowRisk(double data, const RiskValues sensorContext[], const int context);
         void checkContext(double risk, double data, const RiskValues context[], const char* contextName, int* targetContextCount);
-        std::vector<int> findTargetContextAndRepeatedValues(const int targetContextCount[3], int currentContext, int* targetContext);
         bool checkLowOrMidRisk(double data, const RiskValues sensorContext[], const int context);
         double calculateDisplacement(double data, const RiskValues sensorContext[], const int context);
 

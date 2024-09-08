@@ -210,27 +210,25 @@ void ContextAdaptation::analyze() {
     checkContext(currentData.abpd_risk, currentData.abpd_data, abpdContext, "ABPD", targetContextCount);
     checkContext(currentData.abps_risk, currentData.abps_data, abpsContext, "ABPS", targetContextCount);
     checkContext(currentData.glc_risk, currentData.glc_data, glucoseContext, "Glucose", targetContextCount);
+    std::vector<int> targetContext;
     for(int i = 0; i < 3; i++) {
         ROS_INFO("Context %d is low risk for %d vital signs", i, targetContextCount[i]);
+        if(targetContextCount[i] > 0) {
+            targetContext.push_back(i);
+        }
     }
-    
-    int targetContext = -1;
 
-    std::vector<int> repeatedIndex = findTargetContextAndRepeatedValues(targetContextCount, currentContext, &targetContext);
-
-    if(targetContext == -1) {
+    if(targetContext.empty()) {
         ROS_INFO("No target context found");
         return;
     }
-
-    if(targetContext != -1) {
-        if(repeatedIndex.empty()) {
-            plan(targetContext);
-        } else {
-            ROS_INFO("Multiple target contexts found");
-            plan(repeatedIndex);
-            // Insert plan function for multple contexts
-        }
+    if(targetContext.size() == 1) {
+        ROS_INFO("Target context = %d", targetContext.front());
+        plan(targetContext.front());
+    }
+    else {
+        ROS_INFO("Multiple target contexts found");
+        plan(targetContext);
     }
     
 }
@@ -253,47 +251,6 @@ bool ContextAdaptation::checkLowRisk(double data, const RiskValues sesnorContext
         return true;
     }
     return false;
-}
-
-std::vector<int> ContextAdaptation::findTargetContextAndRepeatedValues(const int targetContextCount[3], int currentContext, int* targetContext) {
-    int minCount = INT_MAX; // Inicializa com o maior valor possível
-    std::unordered_map<int, std::vector<int>> valueIndex;
-    std::vector<int> repeatedIndex;
-
-    // Iterar pelo array targetContextCount
-    for (int i = 0; i < 3; i++) {
-        // Atualizar o mapa de frequência e armazenar os índices
-        valueIndex[targetContextCount[i]].push_back(i);
-
-        // Caso  contagem do contexto atual seja a menor, nao sendo 0, é armazenado no targetContext o contexto com a menor contagem
-        if (i != currentContext && targetContextCount[i] != 0 && targetContextCount[i] < minCount) {
-            minCount = targetContextCount[i];
-            *targetContext = i;
-        }
-    }
-
-    if(*targetContext == -1) {
-        return repeatedIndex;
-    }
-
-    // Encontrar índices de valores que aparecem mais de uma vez e são os menores valores diferentes de 0
-    for (const auto& pair : valueIndex) {
-        if (pair.second.size() > 1 && pair.first == minCount && pair.first != 0) {
-            repeatedIndex.insert(repeatedIndex.end(), pair.second.begin(), pair.second.end());
-        }
-    }
-
-    // Imprimir targetContext e índices dos valores repetidos
-    ROS_INFO("Target Context: %d", *targetContext);
-
-    std::stringstream ss;
-    ss << "Indices dos valores repetidos: ";
-    for (int index : repeatedIndex) {
-        ss << index << " ";
-    }
-    ROS_INFO("%s", ss.str().c_str());
-
-    return repeatedIndex;
 }
 
 void ContextAdaptation::plan(const int targetContext) {
