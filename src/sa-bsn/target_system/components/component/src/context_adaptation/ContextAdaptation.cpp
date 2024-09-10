@@ -24,7 +24,6 @@ void ContextAdaptation::body() {
     ros::Subscriber TargetSystemDataSub = nh.subscribe("TargetSystemData", 10, &ContextAdaptation::monitor, this);
     ros::Rate loop_rate(rosComponentDescriptor.getFreq());
     while (ros::ok){
-        ROS_INFO("Running");
         if(currentData.pending_analysis) {
             analyze();
             currentData.pending_analysis = false;
@@ -155,6 +154,20 @@ void ContextAdaptation::monitor(const messages::TargetSystemData::ConstPtr& msg)
     currentData.pending_analysis = true;
 
     ROS_INFO("Data collected");
+    ROS_INFO("Current Data: trm_risk: %f, ecg_risk: %f, oxi_risk: %f, abps_risk: %f, abpd_risk: %f, glc_risk: %f, trm_data: %f, ecg_data: %f, oxi_data: %f, abps_data: %f, abpd_data: %f, glc_data: %f, patient_status: %f",
+         currentData.trm_risk,
+         currentData.ecg_risk,
+         currentData.oxi_risk,
+         currentData.abps_risk,
+         currentData.abpd_risk,
+         currentData.glc_risk,
+         currentData.trm_data,
+         currentData.ecg_data,
+         currentData.oxi_data,
+         currentData.abps_data,
+         currentData.abpd_data,
+         currentData.glc_data,
+         currentData.patient_status);
 }
 
 float ContextAdaptation::pushQueueCalculateMean(std::string vitalSign, float data) {
@@ -201,7 +214,7 @@ bool ContextAdaptation::setRisks(std::string vitalSign, float* lowRisk, float* M
 
 void ContextAdaptation::analyze() {
     // Target context is the context is the context with the risk above certain value (60) and with its corresponding data in low risk
-
+    ROS_INFO("Current Context = %d", currentContext);
     // Array with the number of contexts that are low risk for each vital sign, the index is the target context
     int targetContextCount[3] = {0, 0, 0};
     checkContext(currentData.ecg_risk, currentData.ecg_data, heartRateContext, "Heart Rate", targetContextCount);
@@ -212,7 +225,7 @@ void ContextAdaptation::analyze() {
     checkContext(currentData.glc_risk, currentData.glc_data, glucoseContext, "Glucose", targetContextCount);
     std::vector<int> targetContext;
     for(int i = 0; i < 3; i++) {
-        ROS_INFO("Context %d is low risk for %d vital signs", i, targetContextCount[i]);
+        if(i != currentContext) ROS_INFO("Context %d is low risk for %d vital signs", i, targetContextCount[i]);
         if(targetContextCount[i] > 0) {
             targetContext.push_back(i);
         }
@@ -224,11 +237,22 @@ void ContextAdaptation::analyze() {
     }
     if(targetContext.size() == 1) {
         ROS_INFO("Target context = %d", targetContext.front());
-        plan(targetContext.front());
+        if(!plan(targetContext.front())) {
+            ROS_INFO("Current data is not low or mid risk for context %d", targetContext.front());
+        }
     }
     else {
-        ROS_INFO("Multiple target contexts found");
-        plan(targetContext);
+        std::stringstream text, aux, fail;
+        text << "Multiple target contexts found = ";
+        for(auto i : targetContext) {
+            aux << i << " ";
+        }
+        text << aux.str();
+        ROS_INFO_STREAM(text.str());
+        if(!plan(targetContext)){
+            fail << "Current data is not low or mid risk for any of the contexts" << aux.str();
+            ROS_INFO_STREAM(fail.str());
+        }
     }
     
 }
@@ -253,54 +277,54 @@ bool ContextAdaptation::checkLowRisk(double data, const RiskValues sesnorContext
     return false;
 }
 
-void ContextAdaptation::plan(const int targetContext) {
-    ROS_INFO("Selected target context: %d", targetContext);
+bool ContextAdaptation::plan(const int targetContext) {
 
     if (checkLowOrMidRisk(currentData.ecg_data, heartRateContext, targetContext)) {
         ROS_INFO("Heart Rate Data is low or mid risk for context %d", targetContext);
     } else {
         //ROS_INFO("Heart Rate Data is not low or mid risk for context %d", targetContext);
-        return; // Retorna se a checagem falhar
+        return false; // Retorna se a checagem falhar
     }
 
     if (checkLowOrMidRisk(currentData.oxi_data, oxigenationContext, targetContext)) {
         ROS_INFO("Oxygenation Data is low or mid risk for context %d", targetContext);
     } else {
         //ROS_INFO("Oxygenation Data is not low or mid risk for context %d", oxigenationContext);
-        return; // Retorna se a checagem falhar
+        return false; // Retorna se a checagem falhar
     }
 
     if (checkLowOrMidRisk(currentData.trm_data, temperatureContext, targetContext)) {
         ROS_INFO("Temperature Data is low or mid risk for context %d", targetContext);
     } else {
         //ROS_INFO("Temperature Data is not low or mid risk for context %d", temperatureContext);
-        return; // Retorna se a checagem falhar
+        return false; // Retorna se a checagem falhar
     }
 
     if (checkLowOrMidRisk(currentData.abpd_data, abpdContext, targetContext)) {
         ROS_INFO("ABPD Data is low or mid risk for context %d", targetContext);
     } else {
         //ROS_INFO("ABPD Data is not low or mid risk for context %d", abpdContext);
-        return; // Retorna se a checagem falhar
+        return false; // Retorna se a checagem falhar
     }
 
     if (checkLowOrMidRisk(currentData.abps_data, abpsContext, targetContext)) {
         ROS_INFO("ABPS Data is low or mid risk for context %d", targetContext);
     } else {
         //ROS_INFO("ABPS Data is not low or mid risk for context %d", abpsContext);
-        return; // Retorna se a checagem falhar
+        return false; // Retorna se a checagem falhar
     }
 
     if (checkLowOrMidRisk(currentData.glc_data, glucoseContext, targetContext)) {
         ROS_INFO("Glucose Data is low or mid risk for context %d", targetContext);
     } else {
         //ROS_INFO("Glucose Data is not low or mid risk for context %d", glucoseContext);
-        return; // Retorna se a checagem falhar
+        return false; // Retorna se a checagem falhar
     }
     execute(targetContext);
+    return true;
 }
 
-void ContextAdaptation::plan(const std::vector<int> repeatedContexts) {
+bool ContextAdaptation::plan(const std::vector<int> repeatedContexts) {
     std::vector<std::pair<int, double>> contextDisplacements;
     for (int context : repeatedContexts) {
         ROS_INFO("Checking displaments for context %d", context);
@@ -350,9 +374,10 @@ void ContextAdaptation::plan(const std::vector<int> repeatedContexts) {
     }
     if(maxDisplacementContext != -1) {
         execute(maxDisplacementContext);
+        return true;
     }
     else {
-        ROS_INFO("No context was found to execute");
+        return false;
     }
 }
 
