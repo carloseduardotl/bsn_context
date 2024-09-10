@@ -250,7 +250,7 @@ void ContextAdaptation::analyze() {
         text << aux.str();
         ROS_INFO_STREAM(text.str());
         if(!plan(targetContext)){
-            fail << "Current data is not low or mid risk for any of the contexts" << aux.str();
+            fail << "Current data is not low or mid risk for any of the contexts " << aux.str();
             ROS_INFO_STREAM(fail.str());
         }
     }
