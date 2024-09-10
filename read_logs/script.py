@@ -168,33 +168,77 @@ def extract_current_context(line):
         return int(match.group(1))
     return None
 
+def extract_one_context_from_line(line):
+    # Expressão regular para extrair o contexto
+    pattern = re.compile(r'context (\d)')
+    match = pattern.search(line)
+    if match:
+        return int(match.group(1))
+    return None
+
+def extract_two_contexts_from_line(line):
+    # Expressão regular para extrair todos os números
+    pattern = re.compile(r'\b\d+\b')
+    matches = pattern.findall(line)
+    # Converte as correspondências para inteiros
+    return [int(match) for match in matches]
+
 def check_high_risk_is_low_risk(current_data, current_context):
     if current_data['trm_risk'] > risk_threshold:
-        if is_value_in_risk_range(current_data['trm_data'], 'temperature_LowRisk', current_context):
+        if is_value_in_risk_range_exclude_context(current_data['trm_data'], 'temperature_LowRisk', current_context):
             return True
     if current_data['oxi_risk'] > risk_threshold:
-        if is_value_in_risk_range(current_data['oxi_data'], 'oxigenation_LowRisk', current_context):
+        if is_value_in_risk_range_exclude_context(current_data['oxi_data'], 'oxigenation_LowRisk', current_context):
             return True
     if(current_data['abpd_risk'] > risk_threshold):
-        if is_value_in_risk_range(current_data['abpd_data'], 'abpd_LowRisk', current_context):
+        if is_value_in_risk_range_exclude_context(current_data['abpd_data'], 'abpd_LowRisk', current_context):
             return True
     if current_data['abps_risk'] > risk_threshold:
-        if is_value_in_risk_range(current_data['abps_data'], 'abps_LowRisk', current_context):
+        if is_value_in_risk_range_exclude_context(current_data['abps_data'], 'abps_LowRisk', current_context):
             return True
     if current_data['glc_risk'] > risk_threshold:
-        if is_value_in_risk_range(current_data['glc_data'], 'glucose_LowRisk', current_context):
+        if is_value_in_risk_range_exclude_context(current_data['glc_data'], 'glucose_LowRisk', current_context):
             return True
     if current_data['ecg_risk'] > risk_threshold:
-        if is_value_in_risk_range(current_data['ecg_data'], 'heart_rate_LowRisk', current_context):
+        if is_value_in_risk_range_exclude_context(current_data['ecg_data'], 'heart_rate_LowRisk', current_context):
             return True
     return False
 
+def check_low_or_mid_risk(current_data, target_one_context):
+    # Mapeamento dos sufixos de parâmetros para os sufixos de dados correspondentes
+    parameter_to_data_suffix = {
+        'temperature': 'trm_data',
+        'oxigenation': 'oxi_data',
+        'abpd': 'abpd_data',
+        'abps': 'abps_data',
+        'glucose': 'glc_data',
+        'heart_rate': 'ecg_data'
+    }
+    risk_suffixes = ["LowRisk", "MidRisk0", "MidRisk1"]
+    
+    for param_suffix, data_suffix in parameter_to_data_suffix.items():
+        for risk_suffix in risk_suffixes:
+            parameter_key = f"context{target_one_context}_{param_suffix}_{risk_suffix}"
+            # Verifica se a chave existe no dicionário current_data antes de chamar a função
+            if data_suffix in current_data:
+                if not is_value_in_risk_range(current_data[data_suffix], parameter_key):
+                    return False
+    return True
 
+def is_value_in_risk_range(value, parameter):
+    # ex: parameter = 'context0_glucose_LowRisk'
+    if parameter in risk_ranges:
+        low, high = risk_ranges[parameter]
+        if low <= value <= high:
+            #print(low, value, high)
+            return True
+    return False
 
-def is_value_in_risk_range(value, parameter, current_context):
+def is_value_in_risk_range_exclude_context(value, parameter, current_context):
+    # ex: parameter = 'glucose_LowRisk'
     for context in range(3):  # Supondo que temos 3 contextos (0, 1, 2)
         if context != current_context:
-            parameter_key = f"context{context}_{parameter}"
+            parameter_key = f"context{context}_{parameter}" # ex: context0_glucose_LowRisk
             if parameter_key in risk_ranges:
                 low, high = risk_ranges[parameter_key]
                 if low <= value <= high:
@@ -219,6 +263,19 @@ def process_log_file(input_file):
                 confusion_matrix['FN'] += 1
             else:
                 confusion_matrix['TN'] += 1
+        if 'Current data is not low or mid risk for context' in line:
+            target_one_context = extract_one_context_from_line(line)
+            if check_low_or_mid_risk(current_data, target_one_context):
+                confusion_matrix['FN'] += 1
+            else:
+                confusion_matrix['TN'] += 1
+        if 'Current data is not low or mid risk for any of the contexts' in line:
+            target_one_context, target_two_context = extract_two_contexts_from_line(line)
+            if check_low_or_mid_risk(current_data, target_one_context) or check_low_or_mid_risk(current_data, target_two_context):
+                confusion_matrix['FN'] += 1
+            else:
+                confusion_matrix['TN'] += 1
+
             
 
 if __name__ == "__main__":
