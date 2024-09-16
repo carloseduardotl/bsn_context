@@ -183,6 +183,14 @@ def extract_two_contexts_from_line(line):
     # Converte as correspondências para inteiros
     return [int(match) for match in matches]
 
+def extract_planned_context(line):
+    # Expressão regular para extrair o contexto planejado
+    pattern = re.compile(r'Executing plan for context (\d)')
+    match = pattern.search(line)
+    if match:
+        return int(match.group(1))
+    return None
+
 def check_high_risk_is_low_risk(current_data, current_context):
     if current_data['trm_risk'] > risk_threshold:
         if is_value_in_risk_range_exclude_context(current_data['trm_data'], 'temperature_LowRisk', current_context):
@@ -204,7 +212,30 @@ def check_high_risk_is_low_risk(current_data, current_context):
             return True
     return False
 
-def check_low_or_mid_risk(current_data, target_one_context):
+def check_if_all_is_low_or_mid_risk(current_data, target_one_context):
+    # Mapeamento dos sufixos de parâmetros para os sufixos de dados correspondentes
+    parameter_to_data_suffix = {
+        'temperature': 'trm_data',
+        'oxigenation': 'oxi_data',
+        'abpd': 'abpd_data',
+        'abps': 'abps_data',
+        'glucose': 'glc_data',
+        'heart_rate': 'ecg_data'
+    }
+    
+    for param_suffix, data_suffix in parameter_to_data_suffix.items():
+        parameter_key_lr = f"context{target_one_context}_{param_suffix}_LowRisk"
+        parameter_key_mr0 = f"context{target_one_context}_{param_suffix}_MidRisk0"
+        parameter_key_mr1 = f"context{target_one_context}_{param_suffix}_MidRisk1"
+        # Verifica se a chave existe no dicionário current_data antes de chamar a função
+        if data_suffix in current_data:
+            #print(f"Verificando se {data_suffix} está na faixa de risco {parameter_key}")
+            if (not is_value_in_risk_range(current_data[data_suffix], parameter_key_lr)) and (not is_value_in_risk_range(current_data[data_suffix], parameter_key_mr0)) and (not is_value_in_risk_range(current_data[data_suffix], parameter_key_mr1)):
+                print('falso')
+                return False
+    return True
+
+def check_if_one_is_not_low_or_mid_risk(current_data, target_one_context):
     # Mapeamento dos sufixos de parâmetros para os sufixos de dados correspondentes
     parameter_to_data_suffix = {
         'temperature': 'trm_data',
@@ -221,17 +252,20 @@ def check_low_or_mid_risk(current_data, target_one_context):
             parameter_key = f"context{target_one_context}_{param_suffix}_{risk_suffix}"
             # Verifica se a chave existe no dicionário current_data antes de chamar a função
             if data_suffix in current_data:
+                #print(f"Verificando se {data_suffix} está na faixa de risco {parameter_key}")
                 if not is_value_in_risk_range(current_data[data_suffix], parameter_key):
                     return False
     return True
 
 def is_value_in_risk_range(value, parameter):
     # ex: parameter = 'context0_glucose_LowRisk'
+    #print(f"Verificando se {value} está na faixa de risco {parameter}")
     if parameter in risk_ranges:
         low, high = risk_ranges[parameter]
         if low <= value <= high:
             #print(low, value, high)
             return True
+        #print(low, value, high)
     return False
 
 def is_value_in_risk_range_exclude_context(value, parameter, current_context):
@@ -265,16 +299,22 @@ def process_log_file(input_file):
                 confusion_matrix['TN'] += 1
         if 'Current data is not low or mid risk for context' in line:
             target_one_context = extract_one_context_from_line(line)
-            if check_low_or_mid_risk(current_data, target_one_context):
+            if check_if_one_is_not_low_or_mid_risk(current_data, target_one_context) and check_high_risk_is_low_risk(current_data, current_context):
                 confusion_matrix['FN'] += 1
             else:
                 confusion_matrix['TN'] += 1
         if 'Current data is not low or mid risk for any of the contexts' in line:
             target_one_context, target_two_context = extract_two_contexts_from_line(line)
-            if check_low_or_mid_risk(current_data, target_one_context) or check_low_or_mid_risk(current_data, target_two_context):
+            if check_if_one_is_not_low_or_mid_risk(current_data, target_one_context) or check_if_one_is_not_low_or_mid_risk(current_data, target_two_context):
                 confusion_matrix['FN'] += 1
             else:
                 confusion_matrix['TN'] += 1
+        if 'Executing plan for context' in line:
+            planned_context = extract_planned_context(line)
+            if check_if_all_is_low_or_mid_risk(current_data, planned_context):
+                confusion_matrix['TP'] += 1
+            else:
+                confusion_matrix['FP'] += 1
 
             
 
