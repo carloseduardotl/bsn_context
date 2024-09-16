@@ -1,6 +1,7 @@
 <launch>
-    <node name="context_adaptation" pkg="component" type="context_adaptation" output="screen" />
-    <param name="context_frequency" value="1" /> 
+    <arg name="node_start_delay" default="1.0" />  
+    <node name="context_adaptation" pkg="component" type="context_adaptation" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
+    <param name="context_frequency" value="50" /> 
 
     <!-- Risk threshold  and queue size-->
     <param name="adapt_risk_threshold" value="60" />

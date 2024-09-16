@@ -74,6 +74,14 @@ class ContextAdaptation : public arch::ROSComponent {
         RiskValues glucoseContext[3];
         TargetSystemData currentData;
 
+        bool heartRateAvailable;
+        bool oxigenationAvailable;
+        bool temperatureAvailable;
+        bool abpdAvailable;
+        bool abpsAvailable;
+        bool glucoseAvailable;
+        void setUpAvailableSensors();
+
         bool setRisks(std::string vitalSign,float* lowRisk, float* MidRisk0, float* MidRisk1, float* highRisk0, float* highRisk1);
 
         //void monitor();

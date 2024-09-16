@@ -14,6 +14,7 @@ void ContextAdaptation::setUp() {
     rosComponentDescriptor.setFreq(freq);
     setUpContext();
     printAllRiskValues();
+    setUpAvailableSensors();
     nh.getParam("adapt_risk_threshold", riskThreshold);
     nh.getParam("number_of_last_readings", queueSize);
     ROS_INFO("Risk Threshold = %d Queue size = %d", riskThreshold, queueSize);
@@ -133,6 +134,39 @@ void ContextAdaptation::printAllRiskValues() {
     }
 }
 
+void ContextAdaptation::setUpAvailableSensors() {
+    heartRateAvailable = false;
+    oxigenationAvailable = false;
+    temperatureAvailable = false;
+    abpdAvailable = false;
+    abpsAvailable = false;
+    glucoseAvailable = false;
+
+    ros::master::V_TopicInfo master_topics;
+    ros::master::getTopics(master_topics);
+    for (const auto& topic : master_topics) {
+        if(topic.name == "/ecg_data") {
+            ROS_INFO("Heart Rate Available");
+            heartRateAvailable = true;
+        } else if (topic.name == "/oximeter_data") {
+            ROS_INFO("Oxigenation Available");
+            oxigenationAvailable = true;
+        } else if (topic.name == "/thermometer_data") {
+            ROS_INFO("Temperature Available");
+            temperatureAvailable = true;
+        } else if (topic.name == "/abpd_data") {
+            ROS_INFO("ABPD Available");
+            abpdAvailable = true;
+        } else if (topic.name == "/abps_data") {
+            ROS_INFO("ABPS Available");
+            abpsAvailable = true;
+        } else if (topic.name == "/glucosemeter_data") {
+            ROS_INFO("Glucose Available");
+            glucoseAvailable = true;
+        }
+    }
+}
+
 void ContextAdaptation::tearDown() {
     ROS_INFO("Tearing down");
 }
@@ -217,12 +251,12 @@ void ContextAdaptation::analyze() {
     ROS_INFO("Current Context = %d", currentContext);
     // Array with the number of contexts that are low risk for each vital sign, the index is the target context
     int targetContextCount[3] = {0, 0, 0};
-    checkContext(currentData.ecg_risk, currentData.ecg_data, heartRateContext, "Heart Rate", targetContextCount);
-    checkContext(currentData.oxi_risk, currentData.oxi_data, oxigenationContext, "Oxigenation", targetContextCount);
-    checkContext(currentData.trm_risk, currentData.trm_data, temperatureContext, "Temperature", targetContextCount);
-    checkContext(currentData.abpd_risk, currentData.abpd_data, abpdContext, "ABPD", targetContextCount);
-    checkContext(currentData.abps_risk, currentData.abps_data, abpsContext, "ABPS", targetContextCount);
-    checkContext(currentData.glc_risk, currentData.glc_data, glucoseContext, "Glucose", targetContextCount);
+    if(heartRateAvailable) checkContext(currentData.ecg_risk, currentData.ecg_data, heartRateContext, "Heart Rate", targetContextCount);
+    if(oxigenationAvailable) checkContext(currentData.oxi_risk, currentData.oxi_data, oxigenationContext, "Oxigenation", targetContextCount);
+    if(temperatureAvailable) checkContext(currentData.trm_risk, currentData.trm_data, temperatureContext, "Temperature", targetContextCount);
+    if(abpdAvailable) checkContext(currentData.abpd_risk, currentData.abpd_data, abpdContext, "ABPD", targetContextCount);
+    if(abpsAvailable) checkContext(currentData.abps_risk, currentData.abps_data, abpsContext, "ABPS", targetContextCount);
+    if(glucoseAvailable) checkContext(currentData.glc_risk, currentData.glc_data, glucoseContext, "Glucose", targetContextCount);
     std::vector<int> targetContext;
     for(int i = 0; i < 3; i++) {
         if(i != currentContext) ROS_INFO("Context %d is low risk for %d vital signs", i, targetContextCount[i]);
@@ -250,7 +284,7 @@ void ContextAdaptation::analyze() {
         text << aux.str();
         ROS_INFO_STREAM(text.str());
         if(!plan(targetContext)){
-            fail << "Current data is not low or mid risk for any of the contexts " << aux.str();
+            fail << "Current data is not low or mid risk for any of the contexts" << " " << aux.str();
             ROS_INFO_STREAM(fail.str());
         }
     }
@@ -279,46 +313,58 @@ bool ContextAdaptation::checkLowRisk(double data, const RiskValues sesnorContext
 
 bool ContextAdaptation::plan(const int targetContext) {
 
-    if (checkLowOrMidRisk(currentData.ecg_data, heartRateContext, targetContext)) {
-        ROS_INFO("Heart Rate Data is low or mid risk for context %d", targetContext);
-    } else {
-        //ROS_INFO("Heart Rate Data is not low or mid risk for context %d", targetContext);
-        return false; // Retorna se a checagem falhar
+    if(heartRateAvailable) {
+        if (checkLowOrMidRisk(currentData.ecg_data, heartRateContext, targetContext)) {
+            ROS_INFO("Heart Rate Data is low or mid risk for context %d", targetContext);
+        } else {
+            //ROS_INFO("Heart Rate Data is not low or mid risk for context %d", targetContext);
+            return false; // Retorna se a checagem falhar
+        }
     }
 
-    if (checkLowOrMidRisk(currentData.oxi_data, oxigenationContext, targetContext)) {
-        ROS_INFO("Oxygenation Data is low or mid risk for context %d", targetContext);
-    } else {
-        //ROS_INFO("Oxygenation Data is not low or mid risk for context %d", oxigenationContext);
-        return false; // Retorna se a checagem falhar
+    if(oxigenationAvailable) {
+        if (checkLowOrMidRisk(currentData.oxi_data, oxigenationContext, targetContext)) {
+            ROS_INFO("Oxygenation Data is low or mid risk for context %d", targetContext);
+        } else {
+            //ROS_INFO("Oxygenation Data is not low or mid risk for context %d", oxigenationContext);
+            return false; // Retorna se a checagem falhar
+        }
     }
 
-    if (checkLowOrMidRisk(currentData.trm_data, temperatureContext, targetContext)) {
-        ROS_INFO("Temperature Data is low or mid risk for context %d", targetContext);
-    } else {
-        //ROS_INFO("Temperature Data is not low or mid risk for context %d", temperatureContext);
-        return false; // Retorna se a checagem falhar
+    if(temperatureAvailable) {
+        if (checkLowOrMidRisk(currentData.trm_data, temperatureContext, targetContext)) {
+            ROS_INFO("Temperature Data is low or mid risk for context %d", targetContext);
+        } else {
+            //ROS_INFO("Temperature Data is not low or mid risk for context %d", temperatureContext);
+            return false; // Retorna se a checagem falhar
+        }
     }
 
-    if (checkLowOrMidRisk(currentData.abpd_data, abpdContext, targetContext)) {
-        ROS_INFO("ABPD Data is low or mid risk for context %d", targetContext);
-    } else {
-        //ROS_INFO("ABPD Data is not low or mid risk for context %d", abpdContext);
-        return false; // Retorna se a checagem falhar
+    if(abpdAvailable) {
+        if (checkLowOrMidRisk(currentData.abpd_data, abpdContext, targetContext)) {
+            ROS_INFO("ABPD Data is low or mid risk for context %d", targetContext);
+        } else {
+            //ROS_INFO("ABPD Data is not low or mid risk for context %d", abpdContext);
+            return false; // Retorna se a checagem falhar
+        }
     }
 
-    if (checkLowOrMidRisk(currentData.abps_data, abpsContext, targetContext)) {
-        ROS_INFO("ABPS Data is low or mid risk for context %d", targetContext);
-    } else {
-        //ROS_INFO("ABPS Data is not low or mid risk for context %d", abpsContext);
-        return false; // Retorna se a checagem falhar
+    if(abpsAvailable) {
+        if (checkLowOrMidRisk(currentData.abps_data, abpsContext, targetContext)) {
+            ROS_INFO("ABPS Data is low or mid risk for context %d", targetContext);
+        } else {
+            //ROS_INFO("ABPS Data is not low or mid risk for context %d", abpsContext);
+            return false; // Retorna se a checagem falhar
+        }
     }
 
-    if (checkLowOrMidRisk(currentData.glc_data, glucoseContext, targetContext)) {
-        ROS_INFO("Glucose Data is low or mid risk for context %d", targetContext);
-    } else {
-        //ROS_INFO("Glucose Data is not low or mid risk for context %d", glucoseContext);
-        return false; // Retorna se a checagem falhar
+    if(glucoseAvailable) {
+        if (checkLowOrMidRisk(currentData.glc_data, glucoseContext, targetContext)) {
+            ROS_INFO("Glucose Data is low or mid risk for context %d", targetContext);
+        } else {
+            //ROS_INFO("Glucose Data is not low or mid risk for context %d", glucoseContext);
+            return false; // Retorna se a checagem falhar
+        }
     }
     execute(targetContext);
     return true;
@@ -329,12 +375,12 @@ bool ContextAdaptation::plan(const std::vector<int> repeatedContexts) {
     for (int context : repeatedContexts) {
         ROS_INFO("Checking displaments for context %d", context);
         double displacements[6];
-        displacements[0] = calculateDisplacement(currentData.ecg_data, heartRateContext, context);
-        displacements[1] = calculateDisplacement(currentData.oxi_data, oxigenationContext, context);
-        displacements[2] = calculateDisplacement(currentData.trm_data, temperatureContext, context);
-        displacements[3] = calculateDisplacement(currentData.abpd_data, abpdContext, context);
-        displacements[4] = calculateDisplacement(currentData.abps_data, abpsContext, context);
-        displacements[5] = calculateDisplacement(currentData.glc_data, glucoseContext, context);
+        if(heartRateAvailable) displacements[0] = calculateDisplacement(currentData.ecg_data, heartRateContext, context);
+        if(oxigenationAvailable) displacements[1] = calculateDisplacement(currentData.oxi_data, oxigenationContext, context);
+        if(temperatureAvailable) displacements[2] = calculateDisplacement(currentData.trm_data, temperatureContext, context);
+        if(abpdAvailable) displacements[3] = calculateDisplacement(currentData.abpd_data, abpdContext, context);
+        if(abpsAvailable) displacements[4] = calculateDisplacement(currentData.abps_data, abpsContext, context);
+        if(glucoseAvailable) displacements[5] = calculateDisplacement(currentData.glc_data, glucoseContext, context);
 
         // Check if there is any invalid displacement
         bool hasInvalidDisplacement = false;
